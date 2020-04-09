@@ -4,7 +4,7 @@ Client for the simplest Message Queue server
 It can be used to push to and pull from the simple queue server.
 It can also be used as a template for the API.
 """
-
+from typing import Union
 from requests import get, post, HTTPError
 
 
@@ -21,13 +21,19 @@ class QueueEmpty(Exception):
 
 
 class QueueClient:
-    def __init__(self, host: str, port: int):
+    def __init__(self, host: str, port: int=None):
         if not host.startswith('http://'):
             host = 'http://' + host
-        self.address = '%s:%d' % (host, port)
+        self.address = host if port is None else '%s:%d' % (host, port)
 
-    def push(self, queue_name: str, element: dict):
-        res = post(self.address + '/push/' + queue_name, element)
+    def push(self, queue_name: str, element: Union[str, dict]):
+        text = json = None
+        if isinstance(element, str):
+            text = element
+        elif isinstance(element, dict):
+            json = element
+
+        res = post(self.address + '/push/' + queue_name, text, json)
         if res.status_code >= 500:
             raise QueueServerIssue()
 
@@ -37,6 +43,6 @@ class QueueClient:
             raise QueueServerIssue()
         elif res.status_code == 404:
             raise QueueDoesNotExists()
-        if res.status_code == 204 and raise_if_empty:
+        elif res.status_code == 204 and raise_if_empty:
             raise QueueEmpty()
         return res.text
