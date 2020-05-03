@@ -8,7 +8,7 @@ from typing import Union
 from requests import get, post, HTTPError
 
 
-class QueueDoesNotExists(Exception):
+class QueueDoesNotExist(Exception):
     """404 status code is received"""
 
 
@@ -21,17 +21,17 @@ class QueueEmpty(Exception):
 
 
 class QueueClient:
-    def __init__(self, host: str, port: int=None):
+    def __init__(self, host: str, port: int = None):
         if not host.startswith('http://'):
             host = 'http://' + host
         self.address = host if port is None else '%s:%d' % (host, port)
 
-    def push(self, queue_name: str, element: Union[str, dict]):
+    def push(self, message: Union[str, dict], queue_name: str):
         text = json = None
-        if isinstance(element, str):
-            text = element
-        elif isinstance(element, dict):
-            json = element
+        if isinstance(message, str):
+            text = message
+        elif isinstance(message, dict):
+            json = message
 
         res = post(self.address + '/push/' + queue_name, text, json)
         if res.status_code >= 500:
@@ -42,7 +42,7 @@ class QueueClient:
         if res.status_code >= 500:
             raise QueueServerIssue()
         elif res.status_code == 404:
-            raise QueueDoesNotExists()
+            raise QueueDoesNotExist()
         elif res.status_code == 204 and raise_if_empty:
             raise QueueEmpty()
         return res.text
