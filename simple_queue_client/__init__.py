@@ -37,7 +37,7 @@ class QueueClient:
         if res.status_code >= 500:
             raise QueueServerIssue()
 
-    def pull(self, queue_name: str, raise_if_empty: bool = False):
+    def get(self, queue_name: str, raise_if_empty: bool = False):
         res = get(self.address + '/pull/' + queue_name)
         if res.status_code >= 500:
             raise QueueServerIssue()
